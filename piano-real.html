@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Piano - 88 Keys</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: white;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            --color: rgba(54, 226, 201, 0.3);
+            background-color: #0a1a2a;
+            background-image: linear-gradient(0deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%,transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%,transparent),
+                linear-gradient(90deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%,transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%,transparent);
+            background-size: 55px 55px;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .piano-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            width: 95vw;
+            max-width: 95vw;
+            overflow-x: auto;
+            overflow-y: hidden;
+            box-shadow: 0 20px 60px rgba(54, 226, 201, 0.2);
+            border: 2px solid rgba(54, 226, 201, 0.3);
+            backdrop-filter: blur(15px);
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            background: rgba(54, 226, 201, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(54, 226, 201, 0.3);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: rgb(233, 255, 112);
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(233, 255, 112, 0.5);
+        }
+
+        button {
+            background: linear-gradient(45deg, rgb(54, 226, 201), rgb(102, 126, 234));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(54, 226, 201, 0.3);
+            border: 1px solid rgba(54, 226, 201, 0.5);
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, rgb(84, 255, 216), rgb(118, 75, 162));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(54, 226, 201, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(54, 226, 201, 0.3);
+        }
+
+        select, input[type="range"] {
+            background: rgba(0, 0, 0, 0.6);
+            color: rgb(233, 255, 112);
+            border: 1px solid rgba(54, 226, 201, 0.5);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input[type="range"]:focus {
+            outline: none;
+            border-color: rgb(54, 226, 201);
+            box-shadow: 0 0 15px rgba(54, 226, 201, 0.3);
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            width: 2200px;
+            height: 280px;
+            scroll-behavior: smooth;
+        }
+
+        .piano-container::-webkit-scrollbar {
+            height: 12px;
+        }
+
+        .piano-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 6px;
+        }
+
+        .piano-container::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 6px;
+            border: 2px solid #1a1a1a;
+        }
+
+        .piano-container::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+
+        .white-key {
+            width: 38px;
+            height: 220px;
+            background: linear-gradient(to bottom, #ffffff, #f5f5f5);
+            border: 1px solid #ccc;
+            border-radius: 0 0 6px 6px;
+            margin: 0 1px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 8px;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.1s ease;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .white-key:hover {
+            background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+        }
+
+        .white-key:active, .white-key.pressed {
+            background: linear-gradient(to bottom, #e0e0e0, #d5d5d5);
+            transform: translateY(2px);
+        }
+
+        .black-key {
+            width: 25px;
+            height: 140px;
+            background: linear-gradient(to bottom, #333, #000);
+            border: 1px solid #000;
+            border-radius: 0 0 4px 4px;
+            position: absolute;
+            cursor: pointer;
+            z-index: 2;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 5px;
+            font-size: 10px;
+            color: #ccc;
+            transition: all 0.1s ease;
+            user-select: none;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+        }
+
+        .black-key:hover {
+            background: linear-gradient(to bottom, #444, #111);
+        }
+
+        .black-key:active, .black-key.pressed {
+            background: linear-gradient(to bottom, #222, #000);
+            transform: translateY(2px);
+        }
+
+        .note-display {
+            background: rgba(0, 0, 0, 0.8);
+            color: rgb(233, 255, 112);
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            min-width: 120px;
+            text-align: center;
+            border: 2px solid rgba(54, 226, 201, 0.5);
+            box-shadow: 0 0 20px rgba(233, 255, 112, 0.3);
+            text-shadow: 0 0 10px rgba(233, 255, 112, 0.8);
+        }
+
+        .instructions {
+            text-align: center;
+            margin-top: 25px;
+            color: rgb(233, 255, 112);
+            font-size: 16px;
+            max-width: 800px;
+            background: rgba(54, 226, 201, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(54, 226, 201, 0.3);
+            text-shadow: 0 0 10px rgba(233, 255, 112, 0.5);
+        }
+
+        .keyboard-hint {
+            position: absolute;
+            bottom: 2px;
+            font-size: 8px;
+            background: rgba(0,0,0,0.1);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+
+        .octave-marker {
+            position: absolute;
+            top: -15px;
+            left: 0;
+            font-size: 10px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .piano {
+                min-width: 1400px;
+                height: 200px;
+            }
+
+            .white-key {
+                width: 24px;
+                height: 150px;
+                font-size: 10px;
+                padding: 5px;
+            }
+
+            .black-key {
+                width: 16px;
+                height: 95px;
+                font-size: 8px;
+                padding: 3px;
+            }
+
+            .piano-container {
+                padding: 15px;
+                margin: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .piano {
+                min-width: 1200px;
+                height: 160px;
+            }
+
+            .white-key {
+                width: 20px;
+                height: 120px;
+                font-size: 8px;
+                padding: 3px;
+            }
+
+            .black-key {
+                width: 13px;
+                height: 75px;
+                font-size: 7px;
+                padding: 2px;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .de {
+                width: 100px;
+                height: 100px;
+            }
+
+            .den {
+                width: 95px;
+                height: 95px;
+                margin: -47.5px 0 0 -47.5px;
+            }
+        }
+
+        /* ROTARY VOLUME SWITCH STYLES */
+        .volume-container {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .de {
+            user-select: none;
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 100%;
+            box-shadow: 0 0 25px rgba(54, 226, 201, 0.3);
+            background-color: transparent;
+        }
+
+        .de .den, .de .dene, .de .denem, .de .deneme, .de .light, .de .dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+        }
+
+        .den {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            margin: -55px 0 0 -55px;
+            border-radius: 100%;
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, .6), 0 2px 20px rgba(54, 226, 201, 0.5);
+            background: #333;
+            background: -moz-radial-gradient(center, ellipse cover, #555 0%, #222 100%);
+            background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #555), color-stop(100%, #222));
+            background: -webkit-radial-gradient(center, ellipse cover, #555 0%, #222 100%);
+            background: -o-radial-gradient(center, ellipse cover, #555 0%, #222 100%);
+        }
+
+        .dene {
+            z-index: 4;
+            width: 70px;
+            height: 70px;
+            margin: -35px 0 0 -35px;
+            border-radius: 100%;
+            box-shadow: inset 0 2px 2px rgba(54, 226, 201, .4), 0 3px 13px rgba(0, 0, 0, .85);
+            background: #1a1a1a;
+            background: -moz-linear-gradient(top, #2a2a2a 0%, #1a1a1a 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #2a2a2a), color-stop(100%, #1a1a1a));
+            background: -webkit-linear-gradient(top, #2a2a2a 0%, #1a1a1a 100%);
+            background: -o-linear-gradient(top, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .denem {
+            width: 55px;
+            height: 55px;
+            margin: -27.5px 0 0 -27.5px;
+            border-radius: 100%;
+            background: #1a1a1a;
+            background: -moz-linear-gradient(top, #1a1a1a 0%, #2a2a2a 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #1a1a1a), color-stop(100%, #2a2a2a));
+            background: -webkit-linear-gradient(top, #1a1a1a 0%, #2a2a2a 100%);
+            background: -o-linear-gradient(top, #1a1a1a 0%, #2a2a2a 100%);
+        }
+
+        .deneme {
+            width: 40px;
+            height: 40px;
+            margin: -20px 0 0 -20px;
+            border-radius: 100%;
+            box-shadow: inset 0 2px 3px rgba(54, 226, 201, .6), 0 8px 20px rgba(0, 0, 0, .9);
+            background: rgb(54, 226, 201);
+            background: -moz-linear-gradient(top, rgb(54, 226, 201) 0%, rgb(102, 126, 234) 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgb(54, 226, 201)), color-stop(100%, rgb(102, 126, 234)));
+            background: -webkit-linear-gradient(top, rgb(54, 226, 201) 0%, rgb(102, 126, 234) 100%);
+            background: -o-linear-gradient(top, rgb(54, 226, 201) 0%, rgb(102, 126, 234) 100%);
+        }
+
+        .den .switch {
+            z-index: 3;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .den .switch label {
+            z-index: 2;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 35px;
+            margin-top: -17.5px;
+            transform-origin: 0% 50%;
+            -webkit-transform-origin: 0% 50%;
+            -o-transform-origin: 0% 50%;
+            cursor: pointer;
+        }
+
+        .den .switch label span {
+            z-index: 2;
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 25px;
+            height: 100%;
+            font-weight: bold;
+            font-size: 8px;
+            line-height: 35px;
+            text-align: center;
+            color: rgb(233, 255, 112);
+            text-shadow: 0 0 10px rgba(233, 255, 112, 0.8);
+        }
+
+        .den .switch label:nth-child(1) {
+            transform: rotate(-90deg);
+            -webkit-transform: rotate(-90deg);
+            -o-transform: rotate(-90deg);
+        }
+
+        .den .switch label:nth-child(1) span {
+            right: 2px;
+            font-size: 6px;
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+        }
+
+        .den .switch label:nth-child(2) {
+            transform: rotate(-30deg);
+            -webkit-transform: rotate(-30deg);
+            -o-transform: rotate(-30deg);
+        }
+
+        .den .switch label:nth-child(2) span {
+            transform: rotate(30deg);
+            -webkit-transform: rotate(30deg);
+            -o-transform: rotate(30deg);
+        }
+
+        .den .switch label:nth-child(3) {
+            transform: rotate(30deg);
+            -webkit-transform: rotate(30deg);
+            -o-transform: rotate(30deg);
+        }
+
+        .den .switch label:nth-child(3) span {
+            transform: rotate(-30deg);
+            -webkit-transform: rotate(-30deg);
+            -o-transform: rotate(-30deg);
+        }
+
+        .den .switch label:nth-child(4) {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+        }
+
+        .den .switch label:nth-child(4) span {
+            transform: rotate(-90deg);
+            -webkit-transform: rotate(-90deg);
+            -o-transform: rotate(-90deg);
+        }
+
+        .den .switch label:nth-child(5) {
+            transform: rotate(150deg);
+            -webkit-transform: rotate(150deg);
+            -o-transform: rotate(150deg);
+        }
+
+        .den .switch label:nth-child(5) span {
+            transform: rotate(-150deg);
+            -webkit-transform: rotate(-150deg);
+            -o-transform: rotate(-150deg);
+        }
+
+        .den .switch label:nth-child(6) {
+            transform: rotate(210deg);
+            -webkit-transform: rotate(210deg);
+            -o-transform: rotate(210deg);
+        }
+
+        .den .switch label:nth-child(6) span {
+            transform: rotate(-210deg);
+            -webkit-transform: rotate(-210deg);
+            -o-transform: rotate(-210deg);
+        }
+
+        .den .switch input {
+            position: absolute;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* SWITCH LIGHT */
+        .den .light {
+            z-index: 1;
+            width: 50%;
+            height: 50px;
+            margin-top: -25px;
+            transform-origin: 0% 50%;
+            -webkit-transform-origin: 0% 50%;
+            -o-transform-origin: 0% 50%;
+            transform: rotate(-30deg);
+            -webkit-transform: rotate(-30deg);
+            -o-transform: rotate(-30deg);
+            transition: all .5s;
+            -webkit-transition: all .5s;
+            -o-transition: all .5s;
+        }
+
+        .den .light span {
+            opacity: .6;
+            position: absolute;
+            top: 0;
+            left: 8px;
+            width: 50px;
+            height: 50px;
+            background: -moz-radial-gradient(center, ellipse cover, rgba(54, 226, 201, 1) 0%, rgba(54, 226, 201, 0.42) 42%, rgba(54, 226, 201, 0) 72%, rgba(54, 226, 201, 0) 100%);
+            background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, rgba(54, 226, 201, 1)), color-stop(42%, rgba(54, 226, 201, 0.42)), color-stop(72%, rgba(54, 226, 201, 0)), color-stop(100%, rgba(54, 226, 201, 0)));
+            background: -webkit-radial-gradient(center, ellipse cover, rgba(54, 226, 201, 1) 0%, rgba(54, 226, 201, 0.42) 42%, rgba(54, 226, 201, 0) 72%, rgba(54, 226, 201, 0) 100%);
+            background: -o-radial-gradient(center, ellipse cover, rgba(54, 226, 201, 1) 0%, rgba(54, 226, 201, 0.42) 42%, rgba(54, 226, 201, 0) 72%, rgba(54, 226, 201, 0) 100%);
+        }
+
+        /* SWITCH LIGHT POSITIONS */
+        .den #vol_switch_off:checked ~ .light {
+            transform: rotate(-90deg);
+            -webkit-transform: rotate(-90deg);
+            -o-transform: rotate(-90deg);
+        }
+
+        .den #vol_switch_1:checked ~ .light {
+            transform: rotate(-30deg);
+            -webkit-transform: rotate(-30deg);
+            -o-transform: rotate(-30deg);
+        }
+
+        .den #vol_switch_2:checked ~ .light {
+            transform: rotate(30deg);
+            -webkit-transform: rotate(30deg);
+            -o-transform: rotate(30deg);
+        }
+
+        .den #vol_switch_3:checked ~ .light {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+        }
+
+        .den #vol_switch_4:checked ~ .light {
+            transform: rotate(150deg);
+            -webkit-transform: rotate(150deg);
+            -o-transform: rotate(150deg);
+        }
+
+        .den #vol_switch_5:checked ~ .light {
+            transform: rotate(210deg);
+            -webkit-transform: rotate(210deg);
+            -o-transform: rotate(210deg);
+        }
+
+        /* DOT INDICATOR */
+        .den .dot {
+            z-index: 6;
+            width: 50%;
+            height: 6px;
+            margin-top: -3px;
+            transform-origin: 0% 50%;
+            -webkit-transform-origin: 0% 50%;
+            -o-transform-origin: 0% 50%;
+            transition: all .5s;
+            -moz-transition: all .5s;
+            -o-transition: all .5s;
+        }
+
+        .den .dot span {
+            position: absolute;
+            top: 0;
+            left: 15px;
+            width: 6px;
+            height: 6px;
+            border-radius: 100%;
+            background: rgb(233, 255, 112);
+            box-shadow: 0 0 10px rgba(233, 255, 112, 0.8);
+        }
+
+        /* DOT POSITIONS */
+        .den #vol_switch_off:checked ~ .dot {
+            transform: rotate(-90deg);
+            -webkit-transform: rotate(-90deg);
+            -o-transform: rotate(-90deg);
+        }
+
+        .den #vol_switch_1:checked ~ .dot {
+            transform: rotate(-30deg);
+            -webkit-transform: rotate(-30deg);
+            -o-transform: rotate(-30deg);
+        }
+
+        .den #vol_switch_2:checked ~ .dot {
+            transform: rotate(30deg);
+            -webkit-transform: rotate(30deg);
+            -o-transform: rotate(30deg);
+        }
+
+        .den #vol_switch_3:checked ~ .dot {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+        }
+
+        .den #vol_switch_4:checked ~ .dot {
+            transform: rotate(150deg);
+            -webkit-transform: rotate(150deg);
+            -o-transform: rotate(150deg);
+        }
+
+        .den #vol_switch_5:checked ~ .dot {
+            transform: rotate(210deg);
+            -webkit-transform: rotate(210deg);
+            -o-transform: rotate(210deg);
+        }
+
+        /* LINES */
+        .den hr.line {
+            z-index: 1;
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            height: 0;
+            margin-top: -1px;
+            border-width: 1px 0;
+            border-style: solid;
+            border-top-color: #444;
+            border-bottom-color: #666;
+        }
+
+        .den hr.line:nth-child(1) {
+            transform: rotate(-60deg);
+            -webkit-transform: rotate(-60deg);
+            -o-transform: rotate(-60deg);
+        }
+
+        .den hr.line:nth-child(2) {
+            transform: rotate(60deg);
+            -webkit-transform: rotate(60deg);
+            -o-transform: rotate(60deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-pattern"></div>
+
+    <div class="content-wrapper">
+        <div class="note-display" id="noteDisplay">Press a key</div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Volume Control</label>
+            <div class="volume-container">
+                <div class="de">
+                    <div class="den">
+                        <hr class="line">
+                        <hr class="line">
+                        <hr class="line">
+
+                        <div class="switch">
+                            <label for="vol_switch_off"><span>OFF</span></label>
+                            <label for="vol_switch_1"><span>1</span></label>
+                            <label for="vol_switch_2"><span>2</span></label>
+                            <label for="vol_switch_3"><span>3</span></label>
+                            <label for="vol_switch_4"><span>4</span></label>
+                            <label for="vol_switch_5"><span>5</span></label>
+
+                            <input type="radio" name="vol_switch" id="vol_switch_off">
+                            <input type="radio" checked="" name="vol_switch" id="vol_switch_1">
+                            <input type="radio" name="vol_switch" id="vol_switch_2">
+                            <input type="radio" name="vol_switch" id="vol_switch_3">
+                            <input type="radio" name="vol_switch" id="vol_switch_4">
+                            <input type="radio" name="vol_switch" id="vol_switch_5">
+
+                            <div class="light"><span></span></div>
+                            <div class="dot"><span></span></div>
+
+                            <div class="dene">
+                                <div class="denem">
+                                    <div class="deneme"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Instrument</label>
+            <select id="instrument">
+                <option value="piano">Piano</option>
+                <option value="electric">Electric Piano</option>
+                <option value="organ">Organ</option>
+                <option value="harpsichord">Harpsichord</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Record</label>
+            <button id="recordBtn">● Record</button>
+        </div>
+        <div class="control-group">
+            <label>Playback</label>
+            <button id="playBtn" disabled>▶ Play</button>
+        </div>
+    </div>
+
+    <div class="piano-container">
+        <div class="piano" id="piano">
+            <!-- Piano keys will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>🎹 Real 88-Key Piano with Circuit Board Design</strong><br>
+        🎼 <strong>Scroll horizontally</strong> to access all 88 keys (A0 to C8)<br>
+        ⌨️ Keyboard shortcuts: Middle octave (C4-B4) = A S D F G H J + W E T Y U<br>
+        🖱️ Click keys with mouse or use touch. Recording and playback available.
+    </div>
+    </div>
+
+    <script>
+        // Audio context and state
+        let audioContext;
+        let masterGain;
+        let volume = 0.5;
+        let currentInstrument = 'piano';
+        let isRecording = false;
+        let recordedNotes = [];
+        let recordStartTime = 0;
+        let activeNotes = new Map();
+
+        // Piano specifications - Real 88-key piano layout
+        const PIANO_SPECS = {
+            totalKeys: 88,
+            firstKey: { note: 'A', octave: 0 }, // A0
+            lastKey: { note: 'C', octave: 8 }   // C8
+        };
+
+        // Note names in order
+        const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+        // Keyboard mapping for middle octave (C4-B4)
+        const KEYBOARD_MAP = {
+            'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 'g': 'G4', 'h': 'A4', 'j': 'B4',
+            'w': 'C#4', 'e': 'D#4', 't': 'F#4', 'y': 'G#4', 'u': 'A#4'
+        };
+
+        // Initialize audio context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioContext.createGain();
+                masterGain.gain.value = volume;
+                masterGain.connect(audioContext.destination);
+            }
+        }
+
+        // Calculate frequency using A4 = 440Hz standard
+        function getFrequency(noteString) {
+            // Extract note and octave from string like "C4" or "A#3"
+            const match = noteString.match(/^([A-G]#?)(\d+)$/);
+            if (!match) return 440; // Fallback to A4
+
+            const noteName = match[1];
+            const octave = parseInt(match[2]);
+
+            // Calculate semitones from A4
+            const noteIndex = NOTE_NAMES.indexOf(noteName);
+            const semitonesFromA4 = (octave - 4) * 12 + (noteIndex - 9);
+
+            // Use the standard formula: f = 440 * 2^(n/12)
+            return 440 * Math.pow(2, semitonesFromA4 / 12);
+        }
+
+        // Generate piano keyboard with proper 88-key layout
+        function generatePiano() {
+            const piano = document.getElementById('piano');
+            piano.innerHTML = '';
+
+            // Generate keys starting from A0 to C8
+            for (let keyNumber = 1; keyNumber <= PIANO_SPECS.totalKeys; keyNumber++) {
+                const noteData = getKeyNoteData(keyNumber);
+
+                if (WHITE_NOTES.includes(noteData.noteName)) {
+                    createWhiteKey(noteData, keyNumber, piano);
+                }
+            }
+
+            // Generate black keys (positioned over white keys)
+            for (let keyNumber = 1; keyNumber <= PIANO_SPECS.totalKeys; keyNumber++) {
+                const noteData = getKeyNoteData(keyNumber);
+
+                if (!WHITE_NOTES.includes(noteData.noteName)) {
+                    createBlackKey(noteData, keyNumber, piano);
+                }
+            }
+        }
+
+        // Get note data for a piano key number (1-88)
+        function getKeyNoteData(keyNumber) {
+            // Piano starts at A0 (key 1) and ends at C8 (key 88)
+            const semitonesFromA0 = keyNumber - 1;
+            const noteIndex = (semitonesFromA0 + 9) % 12; // A0 is index 9 in NOTE_NAMES
+            const octave = Math.floor((semitonesFromA0 + 9) / 12);
+
+            const noteName = NOTE_NAMES[noteIndex];
+            const noteString = `${noteName}${octave}`;
+
+            return { noteName, octave, noteString, keyNumber };
+        }
+
+        // Create white key element
+        function createWhiteKey(noteData, keyNumber, container) {
+            const key = document.createElement('div');
+            key.className = 'white-key';
+            key.dataset.note = noteData.noteString;
+            key.dataset.keyNumber = keyNumber;
+
+            // Add octave marker for C notes
+            if (noteData.noteName === 'C') {
+                const marker = document.createElement('div');
+                marker.className = 'octave-marker';
+                marker.textContent = `C${noteData.octave}`;
+                key.appendChild(marker);
+            }
+
+            // Add keyboard shortcut for middle octave
+            const keyboardKey = getKeyboardShortcut(noteData.noteString);
+            if (keyboardKey) {
+                const hint = document.createElement('div');
+                hint.className = 'keyboard-hint';
+                hint.textContent = keyboardKey.toUpperCase();
+                key.appendChild(hint);
+                key.dataset.keyboard = keyboardKey;
+            }
+
+            key.textContent = noteData.noteName;
+            key.addEventListener('mousedown', () => playNote(noteData.noteString));
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playNote(noteData.noteString);
+            });
+
+            container.appendChild(key);
+        }
+
+        // Create black key element
+        function createBlackKey(noteData, keyNumber, container) {
+            const key = document.createElement('div');
+            key.className = 'black-key';
+            key.dataset.note = noteData.noteString;
+            key.dataset.keyNumber = keyNumber;
+
+            // Position black key over white keys
+            const position = calculateBlackKeyPosition(keyNumber);
+            key.style.left = `${position}px`;
+
+            // Add keyboard shortcut for middle octave
+            const keyboardKey = getKeyboardShortcut(noteData.noteString);
+            if (keyboardKey) {
+                const hint = document.createElement('div');
+                hint.className = 'keyboard-hint';
+                hint.textContent = keyboardKey.toUpperCase();
+                key.appendChild(hint);
+                key.dataset.keyboard = keyboardKey;
+            }
+
+            key.textContent = noteData.noteName;
+            key.addEventListener('mousedown', () => playNote(noteData.noteString));
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playNote(noteData.noteString);
+            });
+
+            container.appendChild(key);
+        }
+
+        // Calculate black key position based on key number
+        function calculateBlackKeyPosition(keyNumber) {
+            // Count white keys before this black key
+            let whiteKeyCount = 0;
+            for (let i = 1; i < keyNumber; i++) {
+                const noteData = getKeyNoteData(i);
+                if (WHITE_NOTES.includes(noteData.noteName)) {
+                    whiteKeyCount++;
+                }
+            }
+
+            const whiteKeyWidth = 40; // 38px + 2px margin
+            const blackKeyWidth = 25;
+            const containerPadding = 15;
+
+            // Base position
+            let position = containerPadding + (whiteKeyCount * whiteKeyWidth) - (blackKeyWidth / 2);
+
+            // Adjust for black key pattern within octave
+            const noteData = getKeyNoteData(keyNumber);
+            const noteInOctave = NOTE_NAMES.indexOf(noteData.noteName);
+
+            switch (noteInOctave) {
+                case 1: // C#
+                    position -= 2;
+                    break;
+                case 3: // D#
+                    position += 2;
+                    break;
+                case 6: // F#
+                    position -= 1;
+                    break;
+                case 8: // G#
+                    position += 0;
+                    break;
+                case 10: // A#
+                    position += 1;
+                    break;
+            }
+
+            return position;
+        }
+
+        // Get keyboard shortcut for note
+        function getKeyboardShortcut(noteString) {
+            for (const [key, note] of Object.entries(KEYBOARD_MAP)) {
+                if (note === noteString) return key;
+            }
+            return null;
+        }
+
+        // Create instrument sound based on waveform
+        function createInstrument(frequency) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGain);
+
+            switch (currentInstrument) {
+                case 'piano':
+                    oscillator.type = 'triangle';
+                    break;
+                case 'electric':
+                    oscillator.type = 'sawtooth';
+                    break;
+                case 'organ':
+                    oscillator.type = 'square';
+                    break;
+                case 'harpsichord':
+                    oscillator.type = 'triangle';
+                    break;
+                default:
+                    oscillator.type = 'sine';
+            }
+
+            oscillator.frequency.value = frequency;
+
+            return { oscillator, gainNode };
+        }
+
+        // Play a note
+        function playNote(noteString, duration = 1.0, velocity = 0.8) {
+            initAudio();
+
+            const frequency = getFrequency(noteString);
+            const { oscillator, gainNode } = createInstrument(frequency);
+
+            // ADSR envelope
+            const now = audioContext.currentTime;
+            const attack = 0.1;
+            const decay = 0.2;
+            const sustain = 0.7;
+            const release = 0.3;
+
+            // Apply envelope
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(velocity * volume, now + attack);
+            gainNode.gain.linearRampToValueAtTime(velocity * volume * sustain, now + attack + decay);
+            gainNode.gain.setValueAtTime(velocity * volume * sustain, now + duration - release);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            oscillator.start(now);
+            oscillator.stop(now + duration);
+
+            // Visual feedback
+            const keyElement = document.querySelector(`[data-note="${noteString}"]`);
+            if (keyElement) {
+                keyElement.classList.add('pressed');
+                setTimeout(() => keyElement.classList.remove('pressed'), 150);
+            }
+
+            // Update display
+            document.getElementById('noteDisplay').textContent = noteString;
+
+            // Record if recording
+            if (isRecording) {
+                recordedNotes.push({
+                    note: noteString,
+                    time: now - recordStartTime,
+                    duration: duration,
+                    velocity: velocity
+                });
+            }
+
+            // Store active note
+            activeNotes.set(noteString, { oscillator, gainNode, startTime: now });
+
+            // Clean up after note ends
+            setTimeout(() => {
+                activeNotes.delete(noteString);
+            }, duration * 1000);
+        }
+
+        // Play recorded sequence
+        function playRecording() {
+            if (recordedNotes.length === 0) return;
+
+            document.getElementById('playBtn').disabled = true;
+
+            recordedNotes.forEach(noteData => {
+                setTimeout(() => {
+                    playNote(noteData.note, noteData.duration, noteData.velocity);
+                }, noteData.time * 1000);
+            });
+
+            // Re-enable play button
+            const lastNote = recordedNotes[recordedNotes.length - 1];
+            setTimeout(() => {
+                document.getElementById('playBtn').disabled = false;
+            }, (lastNote.time + lastNote.duration) * 1000);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            generatePiano();
+
+            // Rotary volume switch control
+            const volumeSwitches = document.querySelectorAll('input[name="vol_switch"]');
+            volumeSwitches.forEach(switchInput => {
+                switchInput.addEventListener('change', () => {
+                    if (switchInput.checked) {
+                        const switchId = switchInput.id;
+                        let newVolume = 0;
+
+                        switch(switchId) {
+                            case 'vol_switch_off':
+                                newVolume = 0;
+                                break;
+                            case 'vol_switch_1':
+                                newVolume = 0.2;
+                                break;
+                            case 'vol_switch_2':
+                                newVolume = 0.4;
+                                break;
+                            case 'vol_switch_3':
+                                newVolume = 0.6;
+                                break;
+                            case 'vol_switch_4':
+                                newVolume = 0.8;
+                                break;
+                            case 'vol_switch_5':
+                                newVolume = 1.0;
+                                break;
+                        }
+
+                        volume = newVolume;
+                        if (masterGain) masterGain.gain.value = volume;
+                    }
+                });
+            });
+
+            // Instrument selector
+            document.getElementById('instrument').addEventListener('change', (e) => {
+                currentInstrument = e.target.value;
+            });
+
+            // Recording controls
+            document.getElementById('recordBtn').addEventListener('click', () => {
+                if (isRecording) {
+                    isRecording = false;
+                    document.getElementById('recordBtn').textContent = '● Record';
+                    document.getElementById('playBtn').disabled = false;
+                } else {
+                    initAudio();
+                    isRecording = true;
+                    recordedNotes = [];
+                    recordStartTime = audioContext.currentTime;
+                    document.getElementById('recordBtn').textContent = '⏹ Stop';
+                }
+            });
+
+            document.getElementById('playBtn').addEventListener('click', () => {
+                initAudio();
+                playRecording();
+            });
+
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const noteString = KEYBOARD_MAP[e.key.toLowerCase()];
+                if (noteString) {
+                    playNote(noteString);
+                }
+            });
+
+            // Initialize audio on first interaction
+            document.addEventListener('click', initAudio, { once: true });
+        });
+    </script>
+</body>
+</html>
